@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-visual">
+  <title>抵抗値＆公差 計算ツール（電流由来）</title>
+
+  <style>
+    :root{
+      --bg:#0f1220;
+      --card:#171a2b;
+      --muted:#9aa4b2;
+      --text:#e8ecf1;
+      --accent:#3aa7ff;
+      --danger:#ff6b6b;
+      --focus:#ffd166;
+      --border:#2a2e42;
+      --shadow:0 10px 22px rgba(0,0,0,.28);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --ui-zoom:1;
+      --fs-base:16px;
+      --radius:14px;
+      --ctl-h:50px;
+    }
+
+    html[data-theme="light"]{
+      --bg:#f3f6fb;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#556070;
+      --accent:#1677ff;
+      --danger:#d83a3a;
+      --focus:#ffb020;
+      --border:#d7deea;
+      --shadow:0 10px 22px rgba(16,24,40,.10);
+    }
+
+    @media (max-width:900px){
+      :root{ --ui-zoom:2; --fs-base:22px; --radius:12px; --ctl-h:50px; }
+      input, select, textarea { font-size:16px !important; }
+    }
+
+    *{box-sizing:border-box}
+
+    html{
+      font-size:calc(var(--fs-base)*var(--ui-zoom));
+      -webkit-text-size-adjust:100%;
+      text-size-adjust:100%;
+      touch-action:manipulation;
+      overscroll-behavior:contain;
+    }
+
+    html,body{
+      margin:0;
+      height:100%;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 20% -10%, rgba(26,31,53,.9) 0, var(--bg) 60%),
+        radial-gradient(1200px 800px at 100% 0%, rgba(14,42,61,.65) 0, var(--bg) 55%),
+        var(--bg);
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans JP,Helvetica,Arial;
+      line-height:1.6;
+      overflow-x:hidden;
+    }
+
+    html[data-theme="light"] body{
+      background:
+        radial-gradient(1000px 600px at 20% -10%, rgba(190,205,255,.35) 0, var(--bg) 60%),
+        radial-gradient(1200px 800px at 100% 0%, rgba(180,240,255,.28) 0, var(--bg) 55%),
+        var(--bg);
+      color:var(--text);
+    }
+
+    header{ padding:calc(12px + var(--safe-top)) 14px 8px; }
+    header h1{
+      margin:0;
+      text-align:center;
+      letter-spacing:.02em;
+      font-weight:800;
+      font-size:1.55rem;
+    }
+    @media (min-width:900px){ header h1{font-size:1.95rem} }
+    header p{
+      margin:6px auto 0;
+      max-width:900px;
+      text-align:center;
+      color:var(--muted);
+      font-size:1rem;
+      line-height:1.55;
+    }
+
+    .container{max-width:1160px; margin:0 auto; padding:10px 12px 18px}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:14px}
+
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.006));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:14px;
+      backdrop-filter:blur(6px);
+      box-shadow:var(--shadow);
+    }
+    html[data-theme="light"] .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.92));
+    }
+
+    .input-card{grid-column:span 12; order:1}
+    .result-card{grid-column:span 12; order:2}
+    @media (min-width:1200px){
+      .input-card{grid-column:span 5}
+      .result-card{grid-column:span 7}
+    }
+
+    .kicker{
+      display:inline-block;
+      font-size:.95rem;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:var(--accent);
+      margin-bottom:6px;
+      font-weight:700
+    }
+
+    .fields{display:grid; grid-template-columns:1fr; gap:12px}
+
+    .row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 66px;
+      gap:10px;
+      align-items:center;
+      padding:2px;
+      border-radius:12px;
+    }
+    .row:active{ background:rgba(255,255,255,.03) }
+    html[data-theme="light"] .row:active{ background:rgba(2,6,23,.04) }
+
+    label{
+      display:block;
+      font-size:1.06rem;
+      color:var(--muted);
+      margin:0 0 4px
+    }
+
+    .cfg{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+
+    input, select, button{
+      width:100%;
+      border:1px solid var(--border);
+      background:#0d1020;
+      color:var(--text);
+      border-radius:12px;
+      padding:0 .9rem;
+      height:var(--ctl-h);
+      line-height:calc(var(--ctl-h) - 2px);
+      font-size:1.06rem !important;
+      text-align:center;
+      outline:none;
+      transition:.15s;
+    }
+
+    html[data-theme="light"] input,
+    html[data-theme="light"] select,
+    html[data-theme="light"] button{
+      background:#ffffff;
+      color:var(--text);
+      border-color:var(--border);
+    }
+
+    select{ text-align:center; text-align-last:center; }
+    input::placeholder{color:#b8c1cc; opacity:.6}
+    html[data-theme="light"] input::placeholder{ color:#94a3b8; opacity:.9 }
+
+    input:focus,select:focus{
+      border-color:var(--focus);
+      box-shadow:0 0 0 3px rgba(255,209,102,.18)
+    }
+    html[data-theme="light"] input:focus,
+    html[data-theme="light"] select:focus{
+      box-shadow:0 0 0 3px rgba(255,176,32,.20);
+    }
+
+    .unit{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:var(--ctl-h);
+      padding:0 10px;
+      min-width:60px;
+      border:1px dashed var(--border);
+      border-radius:12px;
+      color:var(--muted);
+      background:#0b0e1c;
+      font-variant-numeric:tabular-nums;
+    }
+    html[data-theme="light"] .unit{
+      background:#f1f5fb;
+      color:var(--muted);
+    }
+
+    .chips{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+    @media (max-width:900px){ .chips{ grid-template-columns:1fr 1fr } }
+
+    .chip{
+      border:1px solid var(--border);
+      background:#0b0f1f;
+      color:var(--text);
+      border-radius:9999px;
+      padding:0 1.1rem;
+      height:var(--ctl-h);
+      font-size:1.02rem;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition:.15s;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .chip:active{transform:scale(.98)}
+    html[data-theme="light"] .chip{
+      background:#f8fafc;
+      color:var(--text);
+    }
+
+    .controls{margin-top:6px}
+    #resetBtn{width:100%}
+
+    .error{
+      color:var(--danger);
+      margin-top:8px;
+      line-height:1.4;
+      min-height:1.2em;
+      font-size:1rem
+    }
+
+    .results{display:grid; grid-template-columns:1fr; gap:10px}
+    @media (min-width:1200px){ .results{grid-template-columns:repeat(3,minmax(0,1fr))} }
+
+    .stat{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:18px;
+      min-height:110px
+    }
+    html[data-theme="light"] .stat{
+      background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.94));
+    }
+
+    .stat h3{
+      margin:0 0 6px;
+      font-size:1rem;
+      color:var(--muted);
+      font-weight:700;
+      letter-spacing:.02em
+    }
+
+    .value{
+      font-size:2.55rem;
+      font-weight:800;
+      line-height:1.1;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+      display:flex;
+      align-items:baseline;
+      gap:.25em
+    }
+    .value .u{ font-size:1.05rem; color:var(--muted) }
+
+    .note{
+      font-size:1rem;
+      color:var(--muted);
+      line-height:1.55;
+      letter-spacing:.01em;
+      padding-left:1rem;
+      margin:0;
+    }
+    .note li{margin:.35rem 0}
+    .note code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.95em}
+
+    footer{text-align:center; color:var(--muted); padding:14px; font-size:.98rem}
+
+    .theme-toggle{
+      position:fixed;
+      right:12px;
+      top:12px;
+      z-index:20;
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      border:1px solid var(--border);
+      background:#0b0f1f;
+      color:var(--text);
+      cursor:pointer;
+      box-shadow:var(--shadow);
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    html[data-theme="light"] .theme-toggle{ background:#ffffff; color:var(--text) }
+  </style>
+</head>
+
+<body>
+  <button id="themeBtn" class="theme-toggle" title="テーマ切替">🌗</button>
+
+  <header>
+    <h1>抵抗値と公差の最小・中央値・最大（電流由来）</h1>
+    <p>電流の中央値は <code>I = W / V</code>。抵抗の中央値は <code>(Rmin + Rmax)/2</code>。</p>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+
+      <section class="card input-card">
+        <div class="kicker">Inputs</div>
+        <div class="fields">
+          <div class="cfg">
+            <div>
+              <label for="voltage">電圧 V</label>
+              <div class="row">
+                <input id="voltage" type="tel" inputmode="decimal" placeholder="例: 200" autocomplete="off" />
+                <span class="unit">V</span>
+              </div>
+            </div>
+            <div>
+              <label for="power">容量 W</label>
+              <div class="row">
+                <input id="power" type="tel" inputmode="decimal" placeholder="例: 2000" autocomplete="off" />
+                <span class="unit">W</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cfg">
+            <div>
+              <label for="tolMinus">公差 −X%（マイナス側）</label>
+              <div class="row">
+                <input id="tolMinus" type="tel" inputmode="decimal" value="10" />
+                <span class="unit">%</span>
+              </div>
+            </div>
+            <div>
+              <label for="tolPlus">公差 +Y%（プラス側）</label>
+              <div class="row">
+                <input id="tolPlus" type="tel" inputmode="decimal" value="10" />
+                <span class="unit">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="kicker">Preset</div>
+          <div class="chips">
+            <button class="chip" data-x="5"  data-y="5">−5% / +5%</button>
+            <button class="chip" data-x="10" data-y="10">−10% / +10%</button>
+            <button class="chip" data-x="2"  data-y="8">−2% / +8%</button>
+            <button class="chip" data-x="0"  data-y="0">クリア（手動）</button>
+          </div>
+
+          <div class="cfg" style="margin-top:6px">
+            <div>
+              <label for="decimals">表示の小数点桁数</label>
+              <div class="row">
+                <input id="decimals" type="tel" inputmode="numeric" min="0" max="6" step="1" value="2" />
+                <span class="unit">桁</span>
+              </div>
+            </div>
+            <div>
+              <label for="unitMode">単位</label>
+              <div class="row">
+                <select id="unitMode">
+                  <option value="ohm" selected>Ω</option>
+                  <option value="mohm">mΩ</option>
+                  <option value="kohm">kΩ</option>
+                </select>
+                <span class="unit">R</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls"><button class="muted" id="resetBtn" type="button">リセット</button></div>
+          <div id="error" class="error" role="alert" aria-live="assertive"></div>
+        </div>
+      </section>
+
+      <section class="card result-card" id="results">
+        <div class="kicker">Results（電流 & 電流由来R）</div>
+
+        <div class="results" style="margin-bottom:10px">
+          <div class="stat">
+            <h3>最小 R<sub>min</sub>（I<sub>max</sub> 由来）</h3>
+            <div class="value" id="rMin"><span class="num">—</span><small class="u"></small></div>
+          </div>
+          <div class="stat">
+            <h3>抵抗値 R（中央値 = (R<sub>min</sub> + R<sub>max</sub>) / 2）</h3>
+            <div class="value" id="rCenter"><span class="num">—</span><small class="u"></small></div>
+          </div>
+          <div class="stat">
+            <h3>最大 R<sub>max</sub>（I<sub>min</sub> 由来）</h3>
+            <div class="value" id="rMax"><span class="num">—</span><small class="u"></small></div>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="stat">
+            <h3>最小 I<sub>min</sub></h3>
+            <div class="value" id="iMin"><span class="num">—</span><small class="u">A</small></div>
+          </div>
+          <div class="stat">
+            <h3>電流 I（中央値 = W / V）</h3>
+            <div class="value" id="iCenter"><span class="num">—</span><small class="u">A</small></div>
+          </div>
+          <div class="stat">
+            <h3>最大 I<sub>max</sub></h3>
+            <div class="value" id="iMax"><span class="num">—</span><small class="u">A</small></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <section class="card" style="margin-top:10px;">
+      <div class="kicker">NOTE</div>
+      <ul class="note">
+        <li>電流：<code>I = W / V</code>、<code>I<sub>min</sub> = I × (1 − X/100)</code>、<code>I<sub>max</sub> = I × (1 + Y/100)</code></li>
+        <li>抵抗（電流由来）：<code>R<sub>min</sub> = V / I<sub>max</sub></code>、<code>R<sub>max</sub> = V / I<sub>min</sub></code>、<code>R（中央値）= (R<sub>min</sub> + R<sub>max</sub>) / 2</code></li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>© 2025 Resistor Tolerance Calculator</footer>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    const mapZen={'０':'0','１':'1','２':'2','３':'3','４':'4','５':'5','６':'6','７':'7','８':'8','９':'9','．':'.','，':',','−':'-','ー':'-','―':'-','％':'%','　':' ',' ':' ',' ':' '};
+    const norm = (s)=> String(s??'').trim().replace(/[０-９．，−ー―％　  ]/g,ch=>mapZen[ch]??ch);
+    const toNum = (v)=> { const n = Number(norm(v).replace(/,/g,'').replace(/%+$/,'')); return Number.isFinite(n)? n : NaN; }
+    const clamp=(n,a,b)=>Math.min(Math.max(n,a),b);
+    const fmtFixed=(n,d)=>{ const s=n.toFixed(d), p=s.split('.'); p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,','); return p.join('.'); };
+    const parts=(val,unit,d)=>{
+      if(!Number.isFinite(val)) return {num:'—',u:''};
+      let x=val,u='Ω';
+      if(unit==='mohm'){ x = val/1e-3; u='mΩ'; }
+      else if(unit==='kohm'){ x = val/1e3;  u='kΩ'; }
+      const k = Math.pow(10,d); x=Math.round(x*k)/k;
+      return {num:fmtFixed(x,d),u};
+    };
+
+    const THEME_KEY='rtc_theme_mode';
+    function applyThemeMode(mode){
+      let theme = mode;
+      if(mode==='auto'){
+        theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.dataset.themeMode = mode;
+      const btn = $('themeBtn');
+      if(btn) btn.textContent = (theme==='light') ? '🌞' : '🌙';
+    }
+    function initTheme(){
+      const saved = localStorage.getItem(THEME_KEY) || 'auto';
+      applyThemeMode(saved);
+      const mq = window.matchMedia('(prefers-color-scheme: light)');
+      mq.addEventListener?.('change', ()=>{
+        const mode = localStorage.getItem(THEME_KEY) || 'auto';
+        if(mode==='auto') applyThemeMode('auto');
+      });
+      $('themeBtn').addEventListener('click', ()=>{
+        const curMode = (document.documentElement.dataset.themeMode || localStorage.getItem(THEME_KEY) || 'auto');
+        const nextMode = (curMode==='auto') ? 'light' : (curMode==='light' ? 'dark' : 'auto');
+        localStorage.setItem(THEME_KEY, nextMode);
+        applyThemeMode(nextMode);
+      });
+    }
+
+    const SAVE_KEY='rtc_state_v2';
+    const FIELDS=['voltage','power','tolMinus','tolPlus','decimals','unitMode'];
+
+    const saveState = ()=>{
+      try{
+        const st={};
+        FIELDS.forEach(id=>{
+          const el=$(id);
+          st[id]= (el && 'value' in el)? el.value : '';
+        });
+        const af=document.activeElement;
+        if(af && af.id && 'selectionStart' in af){
+          st._focusId=af.id;
+          st._sel=[af.selectionStart, af.selectionEnd];
+        }
+        st._scroll=[window.scrollX, window.scrollY];
+        st._t=Date.now();
+        localStorage.setItem(SAVE_KEY, JSON.stringify(st));
+      }catch(_){}
+    };
+
+    const loadState = ()=>{
+      try{
+        const st = JSON.parse(localStorage.getItem(SAVE_KEY)||'{}');
+        if(!st || !st._t) return null;
+        FIELDS.forEach(id=>{
+          if(st[id]!=null){
+            const el=$(id);
+            if(el) el.value=st[id];
+          }
+        });
+        return st;
+      }catch(_){ return null; }
+    };
+
+    const wireAutoSave=(el)=>{
+      el.addEventListener('input', saveState);
+      el.addEventListener('change',saveState);
+    };
+
+    window.addEventListener('pagehide', saveState, {capture:true});
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') saveState(); });
+    window.addEventListener('beforeunload', saveState);
+
+    let _stT=0;
+    window.addEventListener('scroll', ()=>{
+      const now=performance.now();
+      if(now-_stT>250){ _stT=now; saveState(); }
+    }, {passive:true});
+
+    function setVal(id, val, d, unitText){
+      const el=$(id);
+      if(!el) return;
+      if(!Number.isFinite(val)){
+        el.querySelector('.num').textContent='—';
+        return;
+      }
+      const k=Math.pow(10,d);
+      const x=Math.round(val*k)/k;
+      el.querySelector('.num').textContent = fmtFixed(x,d);
+      const u=el.querySelector('.u');
+      if(u) u.textContent = unitText||'';
+    }
+    function setValParts(id, pr){
+      const el=$(id);
+      if(!el) return;
+      el.querySelector('.num').textContent = pr.num;
+      el.querySelector('.u').textContent   = pr.u;
+    }
+    function showAllVoid(){
+      ['iMin','iCenter','iMax','rMin','rCenter','rMax'].forEach(id=>{
+        const el=$(id); if(!el) return;
+        const n=el.querySelector('.num'); if(n) n.textContent='—';
+        const u=el.querySelector('.u');
+        if(u){
+          if(id.startsWith('r')) u.textContent='';
+          if(id.startsWith('i')) u.textContent='A';
+        }
+      });
+    }
+
+    function computeAndRender(){
+      const V=toNum($('voltage').value);
+      const W=toNum($('power').value);
+      const X=clamp(toNum($('tolMinus').value),0,100);
+      const Y=clamp(toNum($('tolPlus').value),0,100);
+      const d=Math.max(0,Math.min(6,parseInt($('decimals').value||'2',10)));
+      const unit=$('unitMode').value;
+
+      if(!(V>0) || !(W>0)){
+        showAllVoid();
+        if(!(W>0)) $('error').textContent = '容量 W は 0 より大きい必要があります。';
+        else $('error').textContent = '';
+        return;
+      }
+      $('error').textContent='';
+
+      // ✅ 電流の中央値は基準値（公差なし）
+      const I = W / V;
+      const Imin = I * (1 - (Number.isFinite(X)?X:0)/100);
+      const Imax = I * (1 + (Number.isFinite(Y)?Y:0)/100);
+
+      // ✅ 抵抗は電流のMin/Maxから
+      const Rmin = V / Imax;
+      const Rmax = V / Imin;
+
+      // ✅ 抵抗の中央値は平均（RminとRmax）
+      const Rcenter = (Rmin + Rmax) / 2;
+
+      setVal('iMin',    Imin, d, 'A');
+      setVal('iCenter', I,    d, 'A');
+      setVal('iMax',    Imax, d, 'A');
+
+      setValParts('rMin',    parts(Rmin, unit, d));
+      setValParts('rCenter', parts(Rcenter, unit, d));
+      setValParts('rMax',    parts(Rmax, unit, d));
+    }
+
+    function centerFieldBox(box){
+      const vv=window.visualViewport;
+      const r=box.getBoundingClientRect();
+      const pageX=window.scrollX + r.left;
+      const pageY=window.scrollY + r.top;
+      const vw=vv?vv.width:window.innerWidth;
+      const vh=vv?vv.height:window.innerHeight;
+      const doc=document.documentElement;
+      const maxX=Math.max(0,doc.scrollWidth - vw);
+      const maxY=Math.max(0,doc.scrollHeight- vh);
+      const left=Math.min(Math.max(pageX - (vw - r.width)/2,0),maxX);
+      const top =Math.min(Math.max(pageY - (vh - r.height)/2,0),maxY);
+      window.scrollTo({left,top,behavior:'auto'});
+    }
+    function centerLoop(box,ms=650){
+      const s=performance.now();
+      (function f(t){ centerFieldBox(box); if(t-s<ms) requestAnimationFrame(f); })(s);
+    }
+    function attachRowTapCentering(row){
+      const input=row.querySelector('input,select,textarea');
+      const onTap=(e)=>{
+        const isMobile=matchMedia('(max-width:900px)').matches;
+        if(!isMobile) return;
+        if(e.cancelable) e.preventDefault();
+        e.stopPropagation();
+
+        if(input && input.tagName==='INPUT'){
+          const savedCaret=getComputedStyle(input).caretColor || '';
+          input.dataset._caretSaved=savedCaret;
+          input.style.caretColor='transparent';
+          input.readOnly=true;
+        }
+
+        centerFieldBox(row);
+        centerLoop(row,700);
+
+        setTimeout(()=>{
+          input?.focus({preventScroll:true});
+          if(input && input.tagName==='SELECT'){ input.click(); }
+          setTimeout(()=>{
+            if(input && input.tagName==='INPUT'){
+              input.readOnly=false;
+              try{ const len=(input.value??'').length; input.setSelectionRange(len,len); }catch(_){}
+              input.style.caretColor=input.dataset._caretSaved || '';
+              delete input.dataset._caretSaved;
+            }
+          },140);
+        },60);
+      };
+      row.addEventListener('pointerdown',onTap,{passive:false});
+      row.addEventListener('touchstart', onTap,{passive:false});
+      row.addEventListener('click',      onTap,{passive:false});
+    }
+
+    function init(){
+      initTheme();
+
+      const st=loadState();
+
+      const V=$('voltage'), W=$('power'), X=$('tolMinus'), Y=$('tolPlus');
+      const dec=$('decimals'), unit=$('unitMode');
+
+      [V,W,X,Y,dec,unit].forEach(el=>{
+        if(!el) return;
+        wireAutoSave(el);
+        el.addEventListener('input', computeAndRender);
+        el.addEventListener('change',computeAndRender);
+        el.addEventListener('focus', ()=>{ const row=el.closest('.row')||el; centerLoop(row,450); });
+      });
+
+      document.querySelectorAll('.row').forEach(attachRowTapCentering);
+
+      V.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();W.focus();}});
+      W.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();X.focus();}});
+      X.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();Y.focus();}});
+      Y.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();dec.focus();}});
+      dec.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();unit.focus();}});
+
+      document.querySelectorAll('.chip[data-x]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          X.value=btn.getAttribute('data-x');
+          Y.value=btn.getAttribute('data-y');
+          saveState();
+          computeAndRender();
+        });
+      });
+
+      $('resetBtn').addEventListener('click',()=>{
+        V.value='';
+        W.value='';
+        X.value='10';
+        Y.value='10';
+        saveState();
+        computeAndRender();
+      });
+
+      computeAndRender();
+
+      if(st){
+        setTimeout(()=>{
+          if(st._scroll){
+            try{ window.scrollTo({left:st._scroll[0]||0, top:st._scroll[1]||0, behavior:'instant'}); }catch(_){ window.scrollTo(st._scroll[0]||0, st._scroll[1]||0); }
+          }
+          if(st._focusId){
+            const fe=$(st._focusId);
+            if(fe){
+              fe.focus({preventScroll:true});
+              if(st._sel && 'setSelectionRange' in fe){
+                try{fe.setSelectionRange(st._sel[0], st._sel[1]);}catch(_){}
+              }
+            }
+          }
+        }, 0);
+      }
+
+      window.addEventListener('pageshow', (e)=>{
+        if(e.persisted){
+          loadState();
+          computeAndRender();
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded',init);
+  </script>
+</body>
+</html>

@@ -206,17 +206,24 @@
       background:#0b0f1f;
       color:var(--text);
       border-radius:9999px;
-      padding:0 1.1rem;
-      height:var(--ctl-h);
+      padding:.28rem .9rem;
+      min-height:var(--ctl-h);
+      height:auto;
       font-size:1.02rem;
       display:flex;
+      flex-direction:column;
       align-items:center;
       justify-content:center;
+      gap:2px;
+      line-height:1.05;
+      text-align:center;
       cursor:pointer;
       transition:.15s;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
+    .chip .chip-main{ font-weight:700 }
+    .chip .chip-sub{ font-size:.88em; color:var(--muted) }
     .chip:active{transform:scale(.98)}
     html[data-theme="light"] .chip{
       background:#f8fafc;
@@ -268,9 +275,19 @@
       white-space:nowrap;
       display:flex;
       align-items:baseline;
-      gap:.25em
+      justify-content:center;
+      gap:.24em
     }
-    .value .u{ font-size:1.05rem; color:var(--muted) }
+    .value .num{
+      min-width:7.4ch;
+      text-align:right;
+    }
+    .value .u{
+      min-width:2.6ch;
+      text-align:left;
+      font-size:1.05rem;
+      color:var(--muted)
+    }
 
     .note{
       font-size:1rem;
@@ -357,10 +374,10 @@
 
           <div class="kicker">Preset</div>
           <div class="chips">
-            <button class="chip" data-x="5"  data-y="5">−5% / +5%</button>
-            <button class="chip" data-x="10" data-y="10">−10% / +10%</button>
-            <button class="chip" data-x="2"  data-y="8">−2% / +8%</button>
-            <button class="chip" data-x="0"  data-y="0">クリア（手動）</button>
+            <button class="chip" data-x="5"  data-y="5"><span class="chip-main">−5%</span><span class="chip-sub">+5%</span></button>
+            <button class="chip" data-x="10" data-y="10"><span class="chip-main">−10%</span><span class="chip-sub">+10%</span></button>
+            <button class="chip" data-x="2"  data-y="8"><span class="chip-main">−2%</span><span class="chip-sub">+8%</span></button>
+            <button class="chip" data-x="0"  data-y="0"><span class="chip-main">クリア</span><span class="chip-sub">（手動）</span></button>
           </div>
 
           <div class="cfg" style="margin-top:6px">

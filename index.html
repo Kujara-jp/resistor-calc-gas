@@ -307,25 +307,68 @@
       right:12px;
       top:12px;
       z-index:20;
-      width:44px;
-      height:44px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
+      width:58px;
+      height:34px;
       border:1px solid var(--border);
+      border-radius:9999px;
+      padding:3px;
       background:#0b0f1f;
-      color:var(--text);
       cursor:pointer;
       box-shadow:var(--shadow);
+      line-height:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       user-select:none;
       -webkit-tap-highlight-color:transparent;
     }
-    html[data-theme="light"] .theme-toggle{ background:#ffffff; color:var(--text) }
+    .theme-toggle-track{
+      width:100%;
+      height:100%;
+      border-radius:9999px;
+      background:rgba(255,255,255,.10);
+      position:relative;
+      display:block;
+    }
+    .theme-toggle-thumb{
+      position:absolute;
+      top:2px;
+      left:2px;
+      width:20px;
+      height:20px;
+      border-radius:50%;
+      background:#ffd166;
+      transition:transform .18s ease, background-color .18s ease;
+    }
+    html[data-theme="light"] .theme-toggle{
+      background:#ffffff;
+    }
+    html[data-theme="light"] .theme-toggle-track{
+      background:rgba(2,6,23,.08);
+    }
+    html[data-theme="light"] .theme-toggle-thumb{
+      transform:translateX(28px);
+      background:#1677ff;
+    }
+
+    @media (min-width:901px){
+      .value{
+        align-items:flex-end;
+        line-height:1;
+      }
+      .value .num{ line-height:1; }
+      .value .u{
+        line-height:1;
+        padding-bottom:.08em;
+      }
+    }
   </style>
 </head>
 
 <body>
-  <button id="themeBtn" class="theme-toggle" title="テーマ切替">🌗</button>
+  <button id="themeBtn" class="theme-toggle" type="button" title="ライト/ダーク切替" aria-label="ライト/ダーク切替" aria-pressed="false">
+    <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+  </button>
 
   <header>
     <h1>抵抗値と公差の最小・中央値・最大（電流由来）</h1>
@@ -471,28 +514,24 @@
 
     const THEME_KEY='rtc_theme_mode';
     function applyThemeMode(mode){
-      let theme = mode;
-      if(mode==='auto'){
-        theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-      }
+      const theme = (mode === 'light') ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', theme);
-      document.documentElement.dataset.themeMode = mode;
       const btn = $('themeBtn');
-      if(btn) btn.textContent = (theme==='light') ? '🌞' : '🌙';
+      if(btn) btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
     }
     function initTheme(){
-      const saved = localStorage.getItem(THEME_KEY) || 'auto';
-      applyThemeMode(saved);
-      const mq = window.matchMedia('(prefers-color-scheme: light)');
-      mq.addEventListener?.('change', ()=>{
-        const mode = localStorage.getItem(THEME_KEY) || 'auto';
-        if(mode==='auto') applyThemeMode('auto');
-      });
+      const saved = localStorage.getItem(THEME_KEY);
+      const initial = (saved === 'light' || saved === 'dark')
+        ? saved
+        : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+
+      applyThemeMode(initial);
+
       $('themeBtn').addEventListener('click', ()=>{
-        const curMode = (document.documentElement.dataset.themeMode || localStorage.getItem(THEME_KEY) || 'auto');
-        const nextMode = (curMode==='auto') ? 'light' : (curMode==='light' ? 'dark' : 'auto');
-        localStorage.setItem(THEME_KEY, nextMode);
-        applyThemeMode(nextMode);
+        const cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+        const next = cur === 'light' ? 'dark' : 'light';
+        localStorage.setItem(THEME_KEY, next);
+        applyThemeMode(next);
       });
     }
 
